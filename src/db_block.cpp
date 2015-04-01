@@ -326,6 +326,25 @@ namespace pagedb {
                                    key, len,
                                    compf_);
     }
+    
+    db_block_cursor* db_block::lower_bound() const throw(db_block_error)
+	{
+		size_t capacity = cursor_ - hdrlen();
+        size_t size = (header_->klen + header_->vlen);
+        size_t nmem = capacity / size;
+        if(capacity != nmem * size) {
+            throw db_block_error(Status::Corruption("data is not aligned", "lower_bound"));
+        }
+        if(nmem != exthdr_->count) {
+            throw db_block_error(Status::Corruption("data count is mismatched", "lower_bound"));
+        }
+        void* ptr = (char* )memory_ + hdrlen();
+
+        return new db_block_cursor(ptr, capacity,
+                                   header_->klen, header_->vlen,
+                                   NULL, 0,
+                                   compf_);
+	}
 
     db_block_cursor* db_block::upper_bound(const void* key, uint32_t len) const throw(db_block_error)
     {
@@ -361,6 +380,26 @@ namespace pagedb {
                                    key, len,
                                    compf_);
     }
+    
+    db_block_cursor* db_block::upper_bound() const throw(db_block_error)
+	{
+		size_t capacity = cursor_ - hdrlen();
+        size_t size = (header_->klen + header_->vlen);
+        size_t nmem = capacity / size;
+        if(capacity != nmem * size) {
+            throw db_block_error(Status::Corruption("data is not aligned", "upper_bound"));
+        }
+        if(nmem != exthdr_->count) {
+            throw db_block_error(Status::Corruption("data count is mismatched", "upper_bound"));
+        }
+        void* ptr = (char* )memory_ + hdrlen() + capacity;
+
+        // capacity should add hdrlen()
+        return new db_block_cursor(ptr, 0,
+                                   header_->klen, header_->vlen,
+                                   NULL, 0,
+                                   compf_);
+	}
 
     ////////////////////////////////////////////////////////////////////////////
     db_block_cursor::db_block_cursor(const void* memory, uint32_t length,
@@ -384,20 +423,25 @@ namespace pagedb {
     bool db_block_cursor::next()
     {
         valid_ = false;
-        if(offset_ + klen_ + vlen_ > length_) {
+        if(offset_ + klen_ + vlen_ >= length_) {
             return false;
         }
 
-        void* nextptr = (char* )memory_ + offset_ + klen_ + vlen_;
+		if(key_ && len_ > 0) {
+			comp_key_arg comp_arg;
+			comp_arg.size = len_;
+			comp_arg.func = compf_;
 
-        comp_key_arg comp_arg;
-        comp_arg.size = len_;
-        comp_arg.func = compf_;
-
-        if(comp_key_with_length(key_, nextptr, &comp_arg) == 0) {
+			void* nextptr = (char* )memory_ + offset_ + klen_ + vlen_;
+			if(comp_key_with_length(key_, nextptr, &comp_arg) == 0) {
+				offset_ += (klen_ + vlen_);
+				valid_ = true;
+			}
+		}
+		else {
             offset_ += (klen_ + vlen_);
-            valid_ = true;
-        }
+			valid_ = true;
+		}
 
         return valid_;
     }

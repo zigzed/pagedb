@@ -272,8 +272,6 @@ void random_insert()
 
 void append_insert()
 {
-	
-
     std::vector<int > seqs;
     seqs.reserve(1000000);
     for(int i = 0; i < 1000000; ++i) {
@@ -431,6 +429,70 @@ void append_insert()
         delete cursor;
         cursor = NULL;
     }
+}
+
+void iterator()
+{
+    {
+		pagedb::db_file dbf("pagedb4.dat", 1 * 1024, 8, 4, NULL, false);
+        pagedb::db_block* block = dbf.tail();
+        char key[64];
+        for(int i = 0; i < 500000; ++i) {
+            int v = i;
+            sprintf(key, "%08d", v);
+            while(!block->save(key, &v)) {
+                block->sort();
+                delete block;
+                block = dbf.insert();
+            }
+        }
+        block->sort();
+        delete block;
+        block = NULL;
+    }
+    {
+		pagedb::db_file dbf("pagedb4.dat", 1 * 1024, 8, 4, NULL, false);
+        pagedb::db_block* block = dbf.tail();
+        char key[64];
+        for(int i = 500000; i < 1000000; ++i) {
+            int v = i;
+            sprintf(key, "%08d", v);
+            while(!block->save(key, &v)) {
+                block->sort();
+                delete block;
+                block = dbf.insert();
+            }
+        }
+        block->sort();
+        delete block;
+        block = NULL;
+    }
+
+    cpp::time::tick_count tc;
+    {
+		pagedb::db_file dbf("pagedb4.dat", 1 * 1024, 8, 4, NULL, true);
+        pagedb::db_file_cursor* cursor = dbf.begin();
+        int found = 0;
+        for(; cursor->valid(); cursor->next()) {
+            int  val = *(int* )cursor->val();
+            if(val != found) {
+                printf("[fail]: %d, expected: %d\n",
+                       val, found
+                       );
+            }
+            ++found;
+        }
+        if(found != 1000000) {
+            printf("[failed]: found count expected 1000000, got %d\n", found);
+        }
+        delete cursor;
+        cursor = NULL;
+    }
+    cpp::time::duration ts = tc.stop();
+    printf("iterator: %d in %ld.%09ld sec\n",
+           1000000,
+           ts.as_timespec().tv_sec,
+           ts.as_timespec().tv_nsec);
 }
 
 void insert_performance(const char* filename, uint32_t blocksize)
@@ -606,6 +668,8 @@ int main(int argc, char* argv[])
 {
     pagedb::db_file::remove("pagedb1.dat");
     pagedb::db_file::remove("pagedb2.dat");
+	pagedb::db_file::remove("pagedb3.dat");
+	pagedb::db_file::remove("pagedb4.dat");
     pagedb::db_file::remove("perf1.dat");
     pagedb::db_file::remove("perf2.dat");
 
@@ -615,6 +679,8 @@ int main(int argc, char* argv[])
     random_insert();
 	printf("============= append insert ===========\n");
 	append_insert();
+	printf("============= iterator ===========\n");
+	iterator();
 
     printf("============= sequence insert performance ===========\n");
     insert_performance("perf1.dat", 4 * 1024 * 1024);

@@ -17,3 +17,6 @@ performance
 
 	insert: key size: 20Bytes, value size: 4Bytes, append 10000000 records (224MB) in 9seconds<br />
 	query:  prefix search with 10 results: 0.002seconds~0.004seconds<br />
+
+4.  iterator
+	iterator: key size: 8Bytes, value size: 4Bytes, 1000000 records in 0.09seconds

@@ -53,6 +53,7 @@ namespace pagedb {
 
         // get a cursor for iterator
         db_file_cursor* begin(const void* key, uint32_t len) const;
+		db_file_cursor* begin() const;
     private:
         void create(const char* filename, uint32_t block_size,
                     uint32_t klen, uint32_t vlen) throw(db_file_error);
@@ -86,6 +87,7 @@ namespace pagedb {
     public:
         db_file_cursor(const db_file* dbf,
                        const void* key, uint32_t klen);
+		db_file_cursor(const db_file* dbf);
         ~db_file_cursor();
 
         bool            next();

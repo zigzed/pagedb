@@ -48,6 +48,9 @@ namespace pagedb {
         db_block_cursor*    lower_bound(const void* key, uint32_t len) const throw(db_block_error);
         // 返回第一条 > key 的记录
         db_block_cursor*    upper_bound(const void* key, uint32_t len) const throw(db_block_error);
+		
+		db_block_cursor*	lower_bound() const throw(db_block_error);
+		db_block_cursor*	upper_bound() const throw(db_block_error);
 
         void                sort() throw(db_block_error);
         bool                sorted() const;

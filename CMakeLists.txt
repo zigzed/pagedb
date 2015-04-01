@@ -41,7 +41,7 @@ endif(${CMAKE_BUILD_TYPE} MATCHES Debug)
 
 set(PAGEDB_SRC
 	pagedb/db.hpp pagedb/slice.hpp
-	pagedb/iterator.hpp pagedb/status.hpp
+	pagedb/status.hpp
 	src/db_block.hpp src/db_block.cpp
     src/db_file.hpp src/db_file.cpp
 	)
