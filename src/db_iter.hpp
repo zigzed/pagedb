@@ -15,7 +15,6 @@ namespace pagedb {
 
         bool Valid() const;
         void SeekToFirst();
-        void SeekToLast();
         void Seek(const Slice& target);
         void Next();
         void Prev();

@@ -20,9 +20,11 @@ namespace pagedb {
 	
     struct Options {
         size_t  	block_size;
+        bool        read_only;
 		COMP_FUNC	comp_func;
         Options()
             : block_size(4 * 1024 * 1024)
+            , read_only(true)
 			, comp_func(0)
         {
         }
@@ -35,7 +37,6 @@ namespace pagedb {
 
         virtual bool Valid() const = 0;
         virtual void SeekToFirst() = 0;
-        virtual void SeekToLast() = 0;
         virtual void Seek(const Slice& target) = 0;
         virtual void Next() = 0;
         virtual void Prev() = 0;
@@ -67,6 +68,8 @@ namespace pagedb {
                            Slice& val) = 0;
         virtual Status Sync() = 0;
         virtual Iterator* NewIterator() = 0;
+    protected:
+        DB();
     private:
         DB(const DB& );
         void operator=(const DB& );

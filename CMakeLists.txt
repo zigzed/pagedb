@@ -44,6 +44,7 @@ set(PAGEDB_SRC
 	pagedb/status.hpp
 	src/db_block.hpp src/db_block.cpp
     src/db_file.hpp src/db_file.cpp
+    src/db_impl.hpp src/db_impl.cpp
 	)
 
 include_directories(${CXXLIB2_ROOT})

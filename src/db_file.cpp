@@ -123,7 +123,12 @@ namespace pagedb {
 
     db_file::~db_file()
     {
-        if(mapping_->mode() != cpp::ipc::memory_mappable::ReadOnly) {
+        flush();
+    }
+
+    void db_file::flush()
+    {
+        if(!readonly()) {
             header_->cksum = 0;
             header_->cksum = XXH32(header_, sizeof(header), 0);
             hdr_map_.commit();
@@ -145,6 +150,11 @@ namespace pagedb {
         return header_->vsize;
     }
 
+    bool db_file::readonly() const
+    {
+        return mapping_->mode() == cpp::ipc::memory_mappable::ReadOnly;
+    }
+
     const db_block* db_file::fetch(size_t index) const
     {
         if(index >= header_->count)
@@ -161,6 +171,9 @@ namespace pagedb {
 
     db_block* db_file::fetch(size_t index)
     {
+        if(readonly()) {
+            throw db_file_error(Status::InvalidArgument("fetch a readonly block for writing"));
+        }
         if(index >= header_->count)
             return NULL;
 
@@ -175,13 +188,21 @@ namespace pagedb {
     
     db_block* db_file::tail()
 	{
-		if(header_->count == 0)
-			return this->insert();
+        if(header_->count == 0) {
+            if(!readonly()) {
+                return this->insert();
+            }
+            return NULL;
+        }
 		return fetch(header_->count - 1);
 	}
 
     db_block* db_file::insert()
     {
+        if(readonly()) {
+            throw db_file_error(Status::InvalidArgument("insert to a readonly block"));
+        }
+
         size_ += header_->block;
 
         mapping_->size(size_);
@@ -220,9 +241,11 @@ namespace pagedb {
     {
         blk_ = dbf_->count();
         dbb_ = dbf_->fetch(pos_);
-        lower_ = dbb_->lower_bound(key_, len_);
-        upper_ = dbb_->upper_bound(key_, len_);
-        step_to_block();
+		if(dbb_) {
+			lower_ = dbb_->lower_bound(key_, len_);
+			upper_ = dbb_->upper_bound(key_, len_);
+			step_to_block();
+		}
     }
 
 	db_file_cursor::db_file_cursor (const db_file* dbf)
@@ -233,9 +256,11 @@ namespace pagedb {
 	{
 		blk_ = dbf_->count();
 		dbb_ = dbf_->fetch(pos_);
-		lower_ = dbb_->lower_bound();
-		upper_ = dbb_->upper_bound();
-		step_to_block();
+		if(dbb_) {
+			lower_ = dbb_->lower_bound();
+			upper_ = dbb_->upper_bound();
+			step_to_block();
+		}
 	}
 
     

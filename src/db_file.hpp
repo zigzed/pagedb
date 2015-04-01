@@ -45,6 +45,7 @@ namespace pagedb {
 
         const db_block* fetch(size_t index) const;
         db_block*       fetch(size_t index);
+        void            flush();
 		db_block*		tail ();
         size_t          count() const;
 
@@ -54,6 +55,8 @@ namespace pagedb {
         // get a cursor for iterator
         db_file_cursor* begin(const void* key, uint32_t len) const;
 		db_file_cursor* begin() const;
+
+        bool            readonly() const;
     private:
         void create(const char* filename, uint32_t block_size,
                     uint32_t klen, uint32_t vlen) throw(db_file_error);

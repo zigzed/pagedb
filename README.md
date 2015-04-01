@@ -19,4 +19,21 @@ performance
 	query:  prefix search with 10 results: 0.002seconds~0.004seconds<br />
 
 4.  iterator
-	iterator: key size: 8Bytes, value size: 4Bytes, 1000000 records in 0.09seconds
+
+	iterator: key size: 8Bytes, value size: 4Bytes, 1000000 records in 0.09seconds<br />
+
+
+feature
+=======
+1.  high append performance
+2.  acceptable query performance
+3.  support duplicated items
+4.  support prefix search
+5.  support custom defined compare function (use memcmp default)
+
+limitation
+===========
+1.  fixed length key & value (designed for index)
+2.  not thread-safe yet
+3.  no compress supported
+
