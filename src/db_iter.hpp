@@ -9,22 +9,25 @@
 
 namespace pagedb {
 
-    class pdb_iterator : public Iterator {
+    class PageDbIter : public Iterator {
     public:
-        ~pdb_iterator();
+        explicit PageDbIter(const db_file* dbf);
+        ~PageDbIter();
 
         bool Valid() const;
         void SeekToFirst();
         void Seek(const Slice& target);
         void Next();
-        void Prev();
         Slice key() const;
         Slice val() const;
         Status status() const;
     private:
-        pdb_iterator(const pdb_iterator& );
-        pdb_iterator& operator= (const pdb_iterator& );
+        PageDbIter(const PageDbIter& );
+        PageDbIter& operator= (const PageDbIter& );
 
+        const db_file*  dbf_;
+        db_file_cursor* cur_;
+        Status          error_;
     };
 
 

@@ -45,6 +45,8 @@ set(PAGEDB_SRC
 	src/db_block.hpp src/db_block.cpp
     src/db_file.hpp src/db_file.cpp
     src/db_impl.hpp src/db_impl.cpp
+    src/db_iter.hpp src/db_iter.cpp
+    src/status.cpp
 	)
 
 include_directories(${CXXLIB2_ROOT})
@@ -54,7 +56,10 @@ link_directories(${CXXLIB2_ROOT}/lib/${CMAKE_BUILD_TYPE})
 add_library(pagedb STATIC ${PAGEDB_SRC})
 
 add_executable(test_dbfile src/test_dbfile.cpp src/db_block.hpp src/db_block.cpp src/status.cpp src/db_file.cpp)
-target_link_libraries(test_dbfile cxxlib2 pagedb)
+target_link_libraries(test_dbfile cxxlib2 pagedb ${RT})
 
 add_executable(test_dbblock src/test_dbblock.cpp src/db_block.hpp src/db_block.cpp src/status.cpp src/db_file.cpp)
-target_link_libraries(test_dbblock cxxlib2)
+target_link_libraries(test_dbblock cxxlib2 ${RT})
+
+add_executable(test_db src/test_db.cpp)
+target_link_libraries(test_db pagedb cxxlib2 ${RT})

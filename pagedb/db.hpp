@@ -28,21 +28,31 @@ namespace pagedb {
 			, comp_func(0)
         {
         }
+
+        Options& set_block_size(size_t bs) {
+            block_size = bs;
+        }
+        Options& set_read_only(bool ro) {
+            read_only = ro;
+        }
+        Options& set_comp_func(COMP_FUNC cf) {
+            comp_func = cf;
+        }
     };
 	
 	class Iterator {
     public:
-        Iterator();
         virtual ~Iterator();
 
         virtual bool Valid() const = 0;
         virtual void SeekToFirst() = 0;
         virtual void Seek(const Slice& target) = 0;
         virtual void Next() = 0;
-        virtual void Prev() = 0;
         virtual Slice key() const = 0;
         virtual Slice val() const = 0;
         virtual Status status() const = 0;
+    protected:
+        Iterator();
     private:
         Iterator(const Iterator& );
         void operator=(const Iterator& );

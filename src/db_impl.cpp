@@ -2,10 +2,41 @@
  * create: 2015-01-04
  * author: zigzed@gmail.com
  */
+#include "pagedb/db.hpp"
 #include "db_impl.hpp"
 #include "db_iter.hpp"
 
 namespace pagedb {
+
+    Status DB::Open(const Options& options,
+                    const std::string& name,
+                    size_t key_length,
+                    size_t val_length,
+                    DB** dbptr)
+    {
+        try {
+            *dbptr = new PageDb(options, name, key_length, val_length);
+        }
+        catch(const db_file_error& e) {
+            return e.status();
+        }
+
+        return Status::OK();
+    }
+
+    Status DB::Destroy(const std::string& name)
+    {
+        db_file::remove(name.c_str());
+        return Status::OK();
+    }
+
+    DB::DB()
+    {
+    }
+
+    DB::~DB()
+    {
+    }
 
     PageDb::PageDb(const Options& options,
                    const std::string& name,
@@ -104,7 +135,7 @@ namespace pagedb {
 
     Iterator* PageDb::NewIterator()
     {
-        // TODO:
+        return new PageDbIter(dbf_);
     }
 
 }
