@@ -90,7 +90,7 @@ namespace pagedb {
         return Status::OK();
     }
 
-    Status PageDb::Get(const Slice& key, Slice& val)
+    Status PageDb::Get(const Slice& key, std::string &val)
     {
         if(key.size() > dbf_->ksize() + dbf_->vsize()) {
             return Status::InvalidArgument("invalid key length");
@@ -99,11 +99,13 @@ namespace pagedb {
         try {
             db_file_cursor* cursor = dbf_->begin(key.data(), key.size());
             if(cursor->valid()) {
-                val = Slice((const char* )cursor->val(), dbf_->vsize());
+                val = std::string((const char* )cursor->val(), dbf_->vsize());
                 delete cursor;
                 cursor = NULL;
                 return Status::OK();
             }
+            delete cursor;
+            cursor = NULL;
         }
         catch(const db_block_error& e) {
             return e.status();

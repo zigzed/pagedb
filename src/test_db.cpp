@@ -53,6 +53,24 @@ void sequence_insert()
         delete iterator;
         iterator = NULL;
     }
+    {
+        std::string val;
+        pagedb::Status s = pdb->Get(pagedb::Slice("00000008", 8), val);
+        if(!s.ok()) {
+            printf("[fail]: get failed\n");
+        }
+        else {
+            printf("[done]: %s:%d\n", "00000008", *(int* )val.data());
+        }
+
+        s = pdb->Get(pagedb::Slice("11111111", 8), val);
+        if(s.ok()) {
+            printf("[fail]: get unexpected result\n");
+        }
+        if(s.IsNotFound()) {
+            printf("[done]: non-exist not found\n");
+        }
+    }
 /*    {
         pagedb::db_file_cursor* cursor = dbf.begin("0000008", 7);
         int found = 0;

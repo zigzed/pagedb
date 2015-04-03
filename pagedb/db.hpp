@@ -75,7 +75,7 @@ namespace pagedb {
 						   const Slice& val) = 0;
 		// search a record
         virtual Status Get(const Slice& key,
-                           Slice& val) = 0;
+                           std::string& val) = 0;
         virtual Status Sync() = 0;
         virtual Iterator* NewIterator() = 0;
     protected:

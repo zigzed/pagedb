@@ -21,7 +21,7 @@ namespace pagedb {
         Status Put(const Slice& key,
                    const Slice& val);
         Status Get(const Slice& key,
-                   Slice& val);
+                   std::string& val);
         Status Sync();
         Iterator* NewIterator();
     private:
