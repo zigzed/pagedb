@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include "cxxlib2/time/tickcount.hpp"
+#include "cxxlib2/sys/thread.hpp"
 
 void sequence_insert()
 {
@@ -19,6 +20,7 @@ void sequence_insert()
             sprintf(key, "%08d", i);
             pdb->Put(pagedb::Slice(key), pagedb::Slice((const char* )&i, sizeof(i)));
         }
+        pdb->Sync();
     }
 
     {
@@ -71,26 +73,27 @@ void sequence_insert()
             printf("[done]: non-exist not found\n");
         }
     }
-/*    {
-        pagedb::db_file_cursor* cursor = dbf.begin("0000008", 7);
+    {
+        pagedb::Iterator* cursor = pdb->NewIterator();
+        cursor->Seek(pagedb::Slice("0000008", 7));
         int found = 0;
-        for(; cursor->valid(); cursor->next()) {
-            if(memcmp(cursor->key(), "0000008", 7) > 0)
+        for(; cursor->Valid(); cursor->Next()) {
+            if(!cursor->key().starts_with("0000008"))
                 break;
             char key[64] = {0};
-            strncpy(key, (char* )cursor->key(), 8);
-            int  val = *(int* )cursor->val();
+            strncpy(key, cursor->key().data(), 8);
+            int val = *(int* )cursor->val().data();
 
-            char exp_key[64];
+            char exp_key[64] = {0};
             sprintf(exp_key, "0000008%d", found);
             int  exp_val = 80 + found;
 
             if(strncmp(exp_key, key, 8) == 0 && exp_val == val) {
-                printf("[done]: %s:%d\n", (char* )key, *(int* )cursor->val());
+                printf("[done]: %s:%d\n", key, val);
             }
             else {
                 printf("[fail]: %s:%d, expected: %s:%d\n",
-                       (char* )key, *(int* )cursor->val(),
+                       (char* )key, val,
                        exp_key, exp_val
                        );
             }
@@ -102,41 +105,38 @@ void sequence_insert()
         delete cursor;
         cursor = NULL;
     }
-
     {
-        pagedb::db_file_cursor* cursor = dbf.begin("0001000", 7);
+        pagedb::Iterator* cursor = pdb->NewIterator();
+        cursor->Seek(pagedb::Slice("0001000", 7));
         int found = 0;
-        for(; cursor->valid(); cursor->next()) {
-            if(memcmp(cursor->key(), "0001000", 7) > 0)
-                break;
-            if(memcmp(cursor->key(), "0001000", 7) > 0)
+        for(; cursor->Valid(); cursor->Next()) {
+            if(!cursor->key().starts_with("0001000"))
                 break;
             char key[64] = {0};
-            strncpy(key, (char* )cursor->key(), 8);
-            int  val = *(int* )cursor->val();
+            strncpy(key, cursor->key().data(), 8);
+            int val = *(int* )cursor->val().data();
 
-            char exp_key[64];
+            char exp_key[64] = {0};
             sprintf(exp_key, "0001000%d", found);
             int  exp_val = 10000 + found;
 
             if(strncmp(exp_key, key, 8) == 0 && exp_val == val) {
-                printf("[done]: %s:%d\n", (char* )key, *(int* )cursor->val());
+                printf("[done]: %s:%d\n", key, val);
             }
             else {
                 printf("[fail]: %s:%d, expected: %s:%d\n",
-                       (char* )key, *(int* )cursor->val(),
+                       (char* )key, val,
                        exp_key, exp_val
                        );
             }
             ++found;
         }
         if(found != 10) {
-            printf("[fail]: found count expected 10, got %d\n", found);
+            printf("[failed]: found count expected 10, got %d\n", found);
         }
         delete cursor;
         cursor = NULL;
     }
-*/
 
 }
 
@@ -679,12 +679,126 @@ void select_performance(const char* filename, uint32_t blocksize)
 }
 */
 
+void writer()
+{
+    printf("%s writer thread::Put ....\n", cpp::time::datetime::now().format("hms.n").c_str());
+    {
+        pagedb::DB* pdb = NULL;
+        pagedb::DB::Open(pagedb::Options().set_block_size(1 * 1024).set_read_only(false),
+                         "pagedb_thread.pdb", 8, 4, &pdb);
+        {
+            char key[64];
+            for(int i = 0; i < 1000000; ++i) {
+                sprintf(key, "%08d", i);
+                pdb->Put(pagedb::Slice(key), pagedb::Slice((const char* )&i, sizeof(i)));
+            }
+        }
+        pdb->Sync();
+
+        delete pdb;
+        pdb = NULL;
+    }
+    printf("%s writer thread::Put done\n", cpp::time::datetime::now().format("hms.n").c_str());
+}
+
+void reader()
+{
+    printf("%s reader thread::Get ....\n", cpp::time::datetime::now().format("hms.n").c_str());
+    {
+        pagedb::DB* pdb = NULL;
+        pagedb::DB::Open(pagedb::Options().set_block_size(1 * 1024).set_read_only(true),
+                         "pagedb_thread.pdb", 8, 4, &pdb);
+
+        int found = 0;
+        do {
+            found = 0;
+            pagedb::Iterator* iterator = pdb->NewIterator();
+            iterator->Seek(pagedb::Slice("0000000", 7));
+            for(; iterator->Valid(); iterator->Next()) {
+                if(memcmp(iterator->key().data(), "0000000", 7) > 0)
+                    break;
+                char key[64] = {0};
+                strncpy(key, iterator->key().data(), 8);
+                int  val = *(int* )iterator->val().data();
+
+                char exp_key[64];
+                sprintf(exp_key, "0000000%d", found);
+                int  exp_val = found;
+
+                if(strncmp(exp_key, key, 8) == 0 && exp_val == val) {
+                    printf("[done]: %s:%d\n", (char* )key, *(int* )iterator->val().data());
+                }
+                else {
+                    printf("[fail]: %s:%d, expected: %s:%d\n",
+                           (char* )key, *(int* )iterator->val().data(),
+                           exp_key, exp_val
+                           );
+                }
+                ++found;
+            }
+            delete iterator;
+        } while(found != 10);
+        delete pdb;
+    }
+
+    {
+        pagedb::DB* pdb = NULL;
+        pagedb::DB::Open(pagedb::Options().set_block_size(1 * 1024).set_read_only(true),
+                         "pagedb_thread.pdb", 8, 4, &pdb);
+
+        int found = 0;
+        do {
+            found = 0;
+            pagedb::Iterator* iterator = pdb->NewIterator();
+            iterator->Seek(pagedb::Slice("0010000", 7));
+            for(; iterator->Valid(); iterator->Next()) {
+                if(memcmp(iterator->key().data(), "0010000", 7) > 0)
+                    break;
+                char key[64] = {0};
+                strncpy(key, iterator->key().data(), 8);
+                int  val = *(int* )iterator->val().data();
+
+                char exp_key[64];
+                sprintf(exp_key, "0010000%d", found);
+                int  exp_val = 100000 + found;
+
+                if(strncmp(exp_key, key, 8) == 0 && exp_val == val) {
+                    printf("[done]: %s:%d\n", (char* )key, *(int* )iterator->val().data());
+                }
+                else {
+                    printf("[fail]: %s:%d, expected: %s:%d\n",
+                           (char* )key, *(int* )iterator->val().data(),
+                           exp_key, exp_val
+                           );
+                }
+                ++found;
+            }
+            delete iterator;
+        } while(found != 10);
+        delete pdb;
+    }
+    printf("%s reader thread::Get done\n", cpp::time::datetime::now().format("hms.n").c_str());
+}
+
+void thread_test()
+{
+    pagedb::DB::Destroy("pagedb_thread.pdb");
+
+    cpp::sys::thread w(&writer);
+    cpp::sys::this_thread::sleep(cpp::time::MilliSeconds(10));
+    cpp::sys::thread r(&reader);
+    w.join();
+    r.join();
+}
+
 int main(int argc, char* argv[])
 {
     pagedb::DB::Destroy("pagedb1.pdb");
 
     printf("============= sequence insert ===========\n");
     sequence_insert();
+    printf("============= thread test ===============\n");
+    thread_test();
 //    printf("============= random insert ===========\n");
 //    random_insert();
 //    printf("============= append insert ===========\n");

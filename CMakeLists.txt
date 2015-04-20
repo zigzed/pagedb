@@ -62,4 +62,4 @@ add_executable(test_dbblock src/test_dbblock.cpp src/db_block.hpp src/db_block.c
 target_link_libraries(test_dbblock cxxlib2 ${RT})
 
 add_executable(test_db src/test_db.cpp)
-target_link_libraries(test_db pagedb cxxlib2 ${RT})
+target_link_libraries(test_db pagedb cxxlib2 ${RT} ${PTHREAD})
