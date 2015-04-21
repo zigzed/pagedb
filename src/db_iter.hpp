@@ -12,6 +12,7 @@ namespace pagedb {
     class PageDbIter : public Iterator {
     public:
         explicit PageDbIter(const db_file* dbf);
+        PageDbIter(const db_file* dbf, const Slice& begin, const Slice& end);
         ~PageDbIter();
 
         bool Valid() const;

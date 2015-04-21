@@ -90,7 +90,7 @@ namespace pagedb {
         return Status::OK();
     }
 
-    Status PageDb::Get(const Slice& key, std::string &val)
+    Status PageDb::Get(const Slice& key, std::string &val) const
     {
         if(key.size() > dbf_->ksize() + dbf_->vsize()) {
             return Status::InvalidArgument("invalid key length");
@@ -135,9 +135,14 @@ namespace pagedb {
         return Status::OK();
     }
 
-    Iterator* PageDb::NewIterator()
+    Iterator* PageDb::NewIterator() const
     {
         return new PageDbIter(dbf_);
+    }
+
+    Iterator* PageDb::EqualRange(const Slice& begin, const Slice& end) const
+    {
+        return new PageDbIter(dbf_, begin, end);
     }
 
 }

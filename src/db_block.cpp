@@ -427,21 +427,23 @@ namespace pagedb {
             return false;
         }
 
-		if(key_ && len_ > 0) {
-			comp_key_arg comp_arg;
-			comp_arg.size = len_;
-			comp_arg.func = compf_;
+//		if(key_ && len_ > 0) {
+//			comp_key_arg comp_arg;
+//			comp_arg.size = len_;
+//			comp_arg.func = compf_;
 
-			void* nextptr = (char* )memory_ + offset_ + klen_ + vlen_;
-			if(comp_key_with_length(key_, nextptr, &comp_arg) == 0) {
-				offset_ += (klen_ + vlen_);
-				valid_ = true;
-			}
-		}
-		else {
-            offset_ += (klen_ + vlen_);
-			valid_ = true;
-		}
+//			void* nextptr = (char* )memory_ + offset_ + klen_ + vlen_;
+//			if(comp_key_with_length(key_, nextptr, &comp_arg) == 0) {
+//				offset_ += (klen_ + vlen_);
+//				valid_ = true;
+//			}
+//		}
+//		else {
+//            offset_ += (klen_ + vlen_);
+//			valid_ = true;
+//		}
+        offset_ += (klen_ + vlen_);
+        valid_ = true;
 
         return valid_;
     }

@@ -20,6 +20,14 @@ namespace pagedb {
     {
     }
 
+    PageDbIter::PageDbIter(const db_file* dbf, const Slice& begin, const Slice& end)
+        : dbf_(dbf)
+        , cur_(NULL)
+    {
+        cur_ = dbf_->bound(begin.data(), begin.size(),
+                           end.data(), end.size());
+    }
+
     PageDbIter::~PageDbIter()
     {
         delete cur_;

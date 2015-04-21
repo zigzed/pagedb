@@ -31,12 +31,15 @@ namespace pagedb {
 
         Options& set_block_size(size_t bs) {
             block_size = bs;
+            return *this;
         }
         Options& set_read_only(bool ro) {
             read_only = ro;
+            return *this;
         }
         Options& set_comp_func(COMP_FUNC cf) {
             comp_func = cf;
+            return *this;
         }
     };
 	
@@ -75,9 +78,10 @@ namespace pagedb {
 						   const Slice& val) = 0;
 		// search a record
         virtual Status Get(const Slice& key,
-                           std::string& val) = 0;
+                           std::string& val) const = 0;
         virtual Status Sync() = 0;
-        virtual Iterator* NewIterator() = 0;
+        virtual Iterator* NewIterator() const = 0;
+        virtual Iterator* EqualRange(const Slice& begin, const Slice& end) const = 0;
     protected:
         DB();
     private:

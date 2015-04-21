@@ -21,9 +21,10 @@ namespace pagedb {
         Status Put(const Slice& key,
                    const Slice& val);
         Status Get(const Slice& key,
-                   std::string& val);
+                   std::string& val) const;
         Status Sync();
-        Iterator* NewIterator();
+        Iterator* NewIterator() const;
+        Iterator* EqualRange(const Slice& begin, const Slice& end) const;
     private:
         db_file*    dbf_;
         db_block*   dbb_;

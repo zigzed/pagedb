@@ -230,27 +230,35 @@ namespace pagedb {
     {
 		return new db_file_cursor(this);
 	}
+
+    db_file_cursor* db_file::bound(const void* begin, uint32_t blen,
+                                   const void* end, uint32_t elen) const
+    {
+        return new db_file_cursor(this, begin, blen, end, elen);
+    }
 	
     ////////////////////////////////////////////////////////////////////////////
     db_file_cursor::db_file_cursor(const db_file* dbf,
                                    const void* key, uint32_t len)
         : dbf_(dbf)
-        , key_(key), len_(len)
+        , begin_(key), blen_(len)
+        , end_(key), elen_(len)
         , pos_(0), blk_(0), dbb_(NULL)
         , lower_(NULL), upper_(NULL)
     {
         blk_ = dbf_->count();
         dbb_ = dbf_->fetch(pos_);
 		if(dbb_) {
-			lower_ = dbb_->lower_bound(key_, len_);
-			upper_ = dbb_->upper_bound(key_, len_);
+            lower_ = dbb_->lower_bound(begin_, blen_);
+            upper_ = dbb_->upper_bound(end_, elen_);
 			step_to_block();
 		}
     }
 
 	db_file_cursor::db_file_cursor (const db_file* dbf)
 		: dbf_(dbf)
-		, key_(NULL), len_(0)
+        , begin_(NULL), blen_(0)
+        , end_(NULL), elen_(0)
 		, pos_(0), blk_(0), dbb_(NULL)
 		, lower_(NULL), upper_(NULL)
 	{
@@ -262,6 +270,24 @@ namespace pagedb {
 			step_to_block();
 		}
 	}
+
+    db_file_cursor::db_file_cursor(const db_file* dbf,
+                                   const void* begin, uint32_t blen,
+                                   const void* end, uint32_t elen)
+        : dbf_(dbf)
+        , begin_(begin), blen_(blen)
+        , end_(end), elen_(elen)
+        , pos_(0), blk_(0), dbb_(NULL)
+        , lower_(NULL), upper_(NULL)
+    {
+        blk_ = dbf_->count();
+        dbb_ = dbf_->fetch(pos_);
+        if(dbb_) {
+            lower_ = dbb_->lower_bound(begin_, blen_);
+            upper_ = dbb_->upper_bound(end_, elen_);
+            step_to_block();
+        }
+    }
 
     
     db_file_cursor::~db_file_cursor()
@@ -290,12 +316,12 @@ namespace pagedb {
 
             dbb_ = dbf_->fetch(pos_);
             // 如果没有排序则认为是最后一个数据块，不做查找。
-			if(key_ && len_ > 0) {
+            if(begin_ && blen_ > 0) {
 				if(!dbb_->sorted()) {
 					return false;
 				}
-				lower_ = dbb_->lower_bound(key_, len_);
-				upper_ = dbb_->upper_bound(key_, len_);
+                lower_ = dbb_->lower_bound(begin_, blen_);
+                upper_ = dbb_->upper_bound(end_, elen_);
 			}
 			else {
 				lower_ = dbb_->lower_bound();
@@ -307,13 +333,15 @@ namespace pagedb {
 
     bool db_file_cursor::next()
     {
-        if(lower_->valid() && !lower_->equal(upper_)) {
-            if(lower_->next()) {
-                return true;
-            }
-        }
-        return step_to_block();
+//        if(lower_->valid() && !lower_->equal(upper_)) {
+//            if(lower_->next()) {
+//                return true;
+//            }
+//        }
+//        return step_to_block();
 
+        lower_->next();
+        return step_to_block();
     }
 
     bool db_file_cursor::valid() const

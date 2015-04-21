@@ -55,6 +55,8 @@ namespace pagedb {
         // get a cursor for iterator
         db_file_cursor* begin(const void* key, uint32_t len) const;
 		db_file_cursor* begin() const;
+        db_file_cursor* bound(const void* begin, uint32_t blen,
+                              const void* end, uint32_t elen) const;
 
         bool            readonly() const;
     private:
@@ -90,6 +92,9 @@ namespace pagedb {
     public:
         db_file_cursor(const db_file* dbf,
                        const void* key, uint32_t klen);
+        db_file_cursor(const db_file* dbf,
+                       const void* begin, uint32_t blen,
+                       const void* end, uint32_t elen);
 		db_file_cursor(const db_file* dbf);
         ~db_file_cursor();
 
@@ -101,8 +106,10 @@ namespace pagedb {
         bool step_to_block();
 
         const db_file*      dbf_;
-        const void*         key_;
-        uint32_t            len_;
+        const void*         begin_;
+        uint32_t            blen_;
+        const void*         end_;
+        uint32_t            elen_;
         size_t              pos_;
         size_t              blk_;
         const db_block*     dbb_;
