@@ -58,6 +58,7 @@ namespace pagedb {
 
     PageDb::~PageDb()
     {
+        Sync();
         delete dbb_;
         dbb_ = NULL;
         delete dbf_;
